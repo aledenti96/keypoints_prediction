@@ -2,18 +2,19 @@ from tensorflow.data import TFRecordDataset
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, BatchNormalization
 from tensorflow.keras.optimizers import Adam, schedules
+from tensorflow.keras.callbacks import EarlyStopping
 import glob
 import math
 import matplotlib.pyplot as plt
 import os
 
-from lib import deserialize_example_cnn as des
+import deserialize_example as des
 
-cluster = False
+cluster = True
 shape_image = 500
 input_shape = (shape_image,shape_image,1)
 num_classes = 8
-files_out_names = "batch_30_epoch_70_lay32"
+files_out_names = "early_stopping_shuffle_low_low_lr"
 
 if(cluster):
     # directory in my home in cluster
@@ -51,7 +52,7 @@ else:
 initial_learning_rate = 0.9
 # decay_rate = 0.01
 decay_step = num_epochs*batch_size_training
-end_learning_rate = 0.05
+end_learning_rate = 0.005
 
 dir_in_training = dir_in + "training/"
 dir_in_validation = dir_in + "validation/"
@@ -61,6 +62,7 @@ dir_in_testing = dir_in + "testing/"
 filenames_train = glob.glob(dir_in_training + "*.tfrecord")
 ds_bytes = TFRecordDataset(filenames_train)
 dataset_training = ds_bytes.map(des.deserialize_example)
+dataset_training = dataset_training.shuffle(5340, reshuffle_each_iteration=True)
 
 # loading validating dataset
 filename_validate = glob.glob(dir_in_validation + "*.tfrecord")
@@ -143,6 +145,7 @@ lr = schedules.PolynomialDecay(
     end_learning_rate
 )
 
+callback = EarlyStopping(monitor='val_loss',mode="min",patience=5,restore_best_weights=True)
 optimizer = Adam(learning_rate=lr)
 
 # Compiling model
@@ -151,7 +154,7 @@ model.compile(loss='mse',optimizer=optimizer)
 
 # Fit model
 print("Fit on Train Dataset")
-history = model.fit(dataset_training, epochs=num_epochs, batch_size=batch_size_training, validation_data = dataset_validation,use_multiprocessing=True)
+history = model.fit(dataset_training, epochs=num_epochs, batch_size=batch_size_training,callbacks=[callback],validation_data = dataset_validation,use_multiprocessing=True)
 
 model.save(model_path + "model_" + files_out_names + ".h5",save_format='h5')
 

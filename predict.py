@@ -33,7 +33,7 @@ def vis_keypoints(image,keypoints,resize_shape,color=KEYPOINT_COLOR,diameter=15)
 
 dir_in = "/home/alessandro/Scrivania/prediction/"
 # dir_model = "/media/alessandro/DATA/Universita/Magistrale/2_anno/LabIA/results/7_relu_last_layer/"
-dir_model = "/media/alessandro/DATA/Universita/Magistrale/2_anno/LabIA/results/500/deeper_models/1_first_layer_32/"
+dir_model = "/media/alessandro/DATA/Universita/Magistrale/2_anno/LabIA/results/500_pixel_scalati/batteria_1/3/"
 
 out_shape = 1000
 
@@ -65,7 +65,7 @@ for i in range(len(images)):
         original_examples.append((res_image,res_keypoints))
 
 
-model = load_model(dir_model + "model_batch_30_epoch_70_lay32.h5")
+model = load_model(dir_model + "model_early_stopping_shuffle_low_lr.h5")
 
 #print("Images:",images)
 
